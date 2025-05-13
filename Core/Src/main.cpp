@@ -25,9 +25,11 @@ extern "C" {
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
+#include "stdio.h"
 }
 #include <iostream>
 
+extern TIM_HandleTypeDef        htim7;
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -58,7 +60,7 @@ extern "C" {
 void SystemClock_Config(void);
 // void MX_FREERTOS_Init(void);
 /* USER CODE BEGIN PFP */
-
+void MX_TIM7_Init(void);  // 启动定时器
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -83,14 +85,14 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-std::cout << "Hello World" << std::endl;
+
   /* USER CODE END Init */
 
   /* Configure the system clock */
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
+  // MX_TIM7_Init();  // 启动定时器
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -106,13 +108,13 @@ std::cout << "Hello World" << std::endl;
   /* USER CODE END 2 */
 
   /* Init scheduler */
-  osKernelInitialize();
+  // osKernelInitialize();
 
   /* Call init function for freertos objects (in cmsis_os2.c) */
-  MX_FREERTOS_Init();
+  // MX_FREERTOS_Init();
 
   /* Start scheduler */
-  osKernelStart();
+  // osKernelStart();
 
   /* We should never get here as control is now taken by the scheduler */
 
@@ -121,7 +123,9 @@ std::cout << "Hello World" << std::endl;
   while (1)
   {
     /* USER CODE END WHILE */
-
+  printf("Hello World1\n");
+    std::cout << "Hello World2" << std::endl;
+    HAL_Delay(1000);
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -172,8 +176,37 @@ void SystemClock_Config(void)
   }
 }
 
-/* USER CODE BEGIN 4 */
+/* USER CODE BEGIN 4 */  
+/**
+  * @brief TIM7 Initialization Function
+  * @param None
+  * @retval None
+  */
+void MX_TIM7_Init(void)
+{
+  /* 1. 基本参数配置 */
+  htim7.Instance               = TIM7;
+  htim7.Init.Prescaler         = 84 - 1;              // 84MHz/84 = 1MHz
+  htim7.Init.CounterMode       = TIM_COUNTERMODE_UP;
+  htim7.Init.Period            = 1000 - 1;             // 1MHz/1000 = 1kHz → 1ms
+  htim7.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim7) != HAL_OK)
+  {
+    Error_Handler();
+  }
 
+  /* 2. NVIC 中断配置 */
+  HAL_NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_4);
+  /* TIM7 中断抢占优先级设为 0（最紧急），可根据系统需求调整 */
+  HAL_NVIC_SetPriority(TIM7_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(TIM7_IRQn);
+
+  /* 3. 启动带中断的基础定时器 */
+  if (HAL_TIM_Base_Start_IT(&htim7) != HAL_OK)
+  {
+    Error_Handler();
+  }
+}
 /* USER CODE END 4 */
 
 /**
@@ -186,15 +219,19 @@ void SystemClock_Config(void)
   */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-  /* USER CODE BEGIN Callback 0 */
-
-  /* USER CODE END Callback 0 */
+  /*
+      * 1) 如果你想用 HAL 的延时函数：
+      *    在此调用 HAL_IncTick() 以驱动 HAL_Delay()
+      */
   if (htim->Instance == TIM7) {
     HAL_IncTick();
   }
-  /* USER CODE BEGIN Callback 1 */
-
-  /* USER CODE END Callback 1 */
+  /*
+      * 2) 如果你用 CMSIS-RTOS v2 (FreeRTOS) 作为底层：
+      *    在此调用 osSystickHandler() 以进给 RTOS 时基
+      *    （一般在 freertos.c 的 SysTick_Handler 中已调用，无需重复）
+      */
+  // osSystickHandler();
 }
 
 /**
