@@ -4,12 +4,16 @@ project(stm32cubemx)
 add_library(stm32cubemx INTERFACE)
 
 # Enable CMake support for ASM and C languages
-enable_language(C ASM)
+enable_language(C CXX ASM)  # 添加C++支持
 
 target_compile_definitions(stm32cubemx INTERFACE 
 	USE_HAL_DRIVER 
 	STM32F407xx
     $<$<CONFIG:Debug>:DEBUG>
+)
+target_compile_options(stm32cubemx INTERFACE
+		$<$<COMPILE_LANGUAGE:CXX>:-fno-exceptions -fno-rtti>  # 将选项移至编译选项区
+		-mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16    #启用FPU
 )
 
 target_include_directories(stm32cubemx INTERFACE
@@ -24,7 +28,7 @@ target_include_directories(stm32cubemx INTERFACE
 )
 
 target_sources(stm32cubemx INTERFACE
-    ../../Core/Src/main.c
+    ../../Core/Src/main.cpp
     ../../Core/Src/gpio.c
     ../../Core/Src/freertos.c
     ../../Core/Src/dma.c
@@ -76,4 +80,7 @@ if(CMAKE_C_STANDARD LESS 11)
     message(ERROR "Generated code requires C11 or higher")
 endif()
 
-
+# 修改C标准检查为C++标准检查
+if(CMAKE_CXX_STANDARD LESS 17)
+	message(STATUS "C++ standard ${CMAKE_CXX_STANDARD} is less than 17")
+endif()

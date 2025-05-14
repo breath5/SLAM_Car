@@ -42,7 +42,7 @@ extern UART_HandleTypeDef huart2;
 
 void MX_USART1_UART_Init(void);
 void MX_USART2_UART_Init(void);
-
+  void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle);
 /* USER CODE BEGIN Prototypes */
 
 /* USER CODE END Prototypes */

@@ -152,7 +152,7 @@ void MX_TIM2_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN TIM2_Init 2 */
-
+  HAL_TIM_Encoder_Start_IT(&htim2, TIM_CHANNEL_ALL);
   /* USER CODE END TIM2_Init 2 */
 
 }
@@ -284,7 +284,7 @@ void MX_TIM5_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN TIM5_Init 2 */
-
+  HAL_TIM_Encoder_Start_IT(&htim5, TIM_CHANNEL_ALL);
   /* USER CODE END TIM5_Init 2 */
 
 }
@@ -338,7 +338,8 @@ void HAL_TIM_Encoder_MspInit(TIM_HandleTypeDef* tim_encoderHandle)
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /* USER CODE BEGIN TIM2_MspInit 1 */
-
+    HAL_NVIC_SetPriority(TIM2_IRQn, 1, 0);
+    HAL_NVIC_EnableIRQ(TIM2_IRQn);
   /* USER CODE END TIM2_MspInit 1 */
   }
   else if(tim_encoderHandle->Instance==TIM3)
@@ -362,7 +363,7 @@ void HAL_TIM_Encoder_MspInit(TIM_HandleTypeDef* tim_encoderHandle)
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
     /* TIM3 interrupt Init */
-    HAL_NVIC_SetPriority(TIM3_IRQn, 5, 0);
+    HAL_NVIC_SetPriority(TIM3_IRQn, 1, 0);
     HAL_NVIC_EnableIRQ(TIM3_IRQn);
   /* USER CODE BEGIN TIM3_MspInit 1 */
 
@@ -389,7 +390,7 @@ void HAL_TIM_Encoder_MspInit(TIM_HandleTypeDef* tim_encoderHandle)
     HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
     /* TIM4 interrupt Init */
-    HAL_NVIC_SetPriority(TIM4_IRQn, 5, 0);
+    HAL_NVIC_SetPriority(TIM4_IRQn, 1, 0);
     HAL_NVIC_EnableIRQ(TIM4_IRQn);
   /* USER CODE BEGIN TIM4_MspInit 1 */
 
@@ -416,7 +417,8 @@ void HAL_TIM_Encoder_MspInit(TIM_HandleTypeDef* tim_encoderHandle)
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /* USER CODE BEGIN TIM5_MspInit 1 */
-
+    HAL_NVIC_SetPriority(TIM5_IRQn, 1, 0);
+    HAL_NVIC_EnableIRQ(TIM5_IRQn);
   /* USER CODE END TIM5_MspInit 1 */
   }
 }
@@ -485,7 +487,7 @@ void HAL_TIM_Encoder_MspDeInit(TIM_HandleTypeDef* tim_encoderHandle)
     HAL_GPIO_DeInit(GPIOA, GPIO_PIN_5);
 
     HAL_GPIO_DeInit(GPIOB, GPIO_PIN_3);
-
+    HAL_NVIC_DisableIRQ(TIM2_IRQn);
   /* USER CODE BEGIN TIM2_MspDeInit 1 */
 
   /* USER CODE END TIM2_MspDeInit 1 */
@@ -545,7 +547,7 @@ void HAL_TIM_Encoder_MspDeInit(TIM_HandleTypeDef* tim_encoderHandle)
     HAL_GPIO_DeInit(GPIOA, GPIO_PIN_0|GPIO_PIN_1);
 
   /* USER CODE BEGIN TIM5_MspDeInit 1 */
-
+    HAL_NVIC_DisableIRQ(TIM5_IRQn);
   /* USER CODE END TIM5_MspDeInit 1 */
   }
 }

@@ -54,6 +54,8 @@ void MX_TIM5_Init(void);
 
 void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
 
+  void HAL_TIM_Encoder_MspInit(TIM_HandleTypeDef* tim_encoderHandle);
+  void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle);
 /* USER CODE BEGIN Prototypes */
 
 /* USER CODE END Prototypes */
