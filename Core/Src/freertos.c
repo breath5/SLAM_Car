@@ -18,6 +18,8 @@
 /* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
+#include <stdio.h>
+
 #include "FreeRTOS.h"
 #include "task.h"
 #include "main.h"
@@ -117,6 +119,7 @@ void StartDefaultTask(void *argument)
   /* Infinite loop */
   for(;;)
   {
+    // printf("Starting default task\n");
     osDelay(1);
   }
   /* USER CODE END StartDefaultTask */

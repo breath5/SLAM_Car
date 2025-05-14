@@ -294,5 +294,19 @@ void DMA2_Stream7_IRQHandler(void)
 }
 
 /* USER CODE BEGIN 1 */
+void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim) {
+  if(htim->Instance == TIM3) {
+    // 处理TIM3编码器事件（电机1和电机2）
+    uint32_t count = TIM3->CNT;
+    // encoder3_count += (int16_t)count;  // 处理16位计数器溢出
+    TIM3->CNT = 0;  // 重置计数器
+}
+else if(htim->Instance == TIM4) {
+    // 处理TIM4编码器事件（电机3和电机4）
+    uint32_t count = TIM4->CNT;
+    // encoder4_count += (int16_t)count;  // 处理16位计数器溢出
+    TIM4->CNT = 0;  // 重置计数器
+}
+}
 
 /* USER CODE END 1 */

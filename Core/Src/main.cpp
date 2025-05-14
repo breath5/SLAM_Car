@@ -98,13 +98,31 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_DMA_Init();
+
+  HAL_TIM_Base_MspInit(&htim1);
   MX_TIM1_Init();
+
   MX_TIM3_Init();
+  HAL_TIM_Encoder_MspInit(&htim3);
   MX_TIM4_Init();
+  HAL_TIM_Encoder_MspInit(&htim4);
+
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();
-  /* USER CODE BEGIN 2 */
+  HAL_UART_MspInit(&huart1);
+  HAL_UART_MspInit(&huart2);
 
+  /* USER CODE BEGIN 2 */
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4);
+  // 设置50%占空比（自动获取ARR值确保准确性）
+  uint32_t auto_reload = __HAL_TIM_GET_AUTORELOAD(&htim1);
+  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, auto_reload / 2);
+  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, auto_reload / 2);
+  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, auto_reload / 2);
+  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, auto_reload / 2);
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -126,6 +144,12 @@ int main(void)
   printf("Hello World1\n");
     std::cout << "Hello World2" << std::endl;
     HAL_Delay(1000);
+    // 读取编码器计数值
+    int32_t encoder3 = TIM3->CNT;
+    int32_t encoder4 = TIM4->CNT;
+    
+    printf("TIM3计数: %ld | TIM4计数: %ld\r\n", encoder3, encoder4);
+    HAL_Delay(100);  // 降低输出频率
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
