@@ -14,6 +14,9 @@ target_compile_definitions(stm32cubemx INTERFACE
 target_compile_options(stm32cubemx INTERFACE
 		$<$<COMPILE_LANGUAGE:CXX>:-fno-exceptions -fno-rtti>  # 将选项移至编译选项区
 		-mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16    #启用FPU
+
+        -O1  # 强制使用O1优化等级
+        -fno-builtin  # 禁用内置函数优化
 )
 
 target_include_directories(stm32cubemx INTERFACE

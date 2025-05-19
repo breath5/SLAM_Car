@@ -152,7 +152,7 @@ void MX_TIM2_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN TIM2_Init 2 */
-  HAL_TIM_Encoder_Start_IT(&htim2, TIM_CHANNEL_ALL);
+  // HAL_TIM_Encoder_Start_IT(&htim2, TIM_CHANNEL_ALL);
   /* USER CODE END TIM2_Init 2 */
 
 }
@@ -196,7 +196,7 @@ void MX_TIM3_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN TIM3_Init 2 */
-  HAL_TIM_Encoder_Start_IT(&htim3, TIM_CHANNEL_ALL);
+  // HAL_TIM_Encoder_Start_IT(&htim3, TIM_CHANNEL_ALL);
   /* USER CODE END TIM3_Init 2 */
 
 }
@@ -240,7 +240,7 @@ void MX_TIM4_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN TIM4_Init 2 */
-  HAL_TIM_Encoder_Start_IT(&htim4, TIM_CHANNEL_ALL);
+  // HAL_TIM_Encoder_Start_IT(&htim4, TIM_CHANNEL_ALL);
   /* USER CODE END TIM4_Init 2 */
 
 }
@@ -284,7 +284,7 @@ void MX_TIM5_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN TIM5_Init 2 */
-  HAL_TIM_Encoder_Start_IT(&htim5, TIM_CHANNEL_ALL);
+  // HAL_TIM_Encoder_Start_IT(&htim5, TIM_CHANNEL_ALL);
   /* USER CODE END TIM5_Init 2 */
 
 }

@@ -20,6 +20,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stm32f4xx_it.h"
+
+#include <stdio.h>
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 /* USER CODE END Includes */
@@ -55,8 +57,10 @@
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
+extern TIM_HandleTypeDef htim2;
 extern TIM_HandleTypeDef htim3;
 extern TIM_HandleTypeDef htim4;
+extern TIM_HandleTypeDef htim5;
 extern DMA_HandleTypeDef hdma_usart1_tx;
 extern DMA_HandleTypeDef hdma_usart1_rx;
 extern DMA_HandleTypeDef hdma_usart2_tx;
@@ -196,6 +200,20 @@ void DMA1_Stream6_IRQHandler(void)
 }
 
 /**
+  * @brief This function handles TIM2 global interrupt.
+  */
+  void TIM2_IRQHandler(void)
+  {
+    /* USER CODE BEGIN TIM2_IRQn 0 */
+  
+    /* USER CODE END TIM2_IRQn 0 */
+    HAL_TIM_IRQHandler(&htim2);
+    /* USER CODE BEGIN TIM2_IRQn 1 */
+  
+    /* USER CODE END TIM2_IRQn 1 */
+  }
+
+/**
   * @brief This function handles TIM3 global interrupt.
   */
 void TIM3_IRQHandler(void)
@@ -222,6 +240,20 @@ void TIM4_IRQHandler(void)
 
   /* USER CODE END TIM4_IRQn 1 */
 }
+
+/**
+  * @brief This function handles TIM3 global interrupt.
+  */
+  void TIM5_IRQHandler(void)
+  {
+    /* USER CODE BEGIN TIM3_IRQn 0 */
+  
+    /* USER CODE END TIM3_IRQn 0 */
+    HAL_TIM_IRQHandler(&htim5);
+    /* USER CODE BEGIN TIM3_IRQn 1 */
+  
+    /* USER CODE END TIM3_IRQn 1 */
+  }
 
 /**
   * @brief This function handles USART1 global interrupt.
@@ -261,7 +293,7 @@ void TIM7_IRQHandler(void)
   /* USER CODE END TIM7_IRQn 0 */
   HAL_TIM_IRQHandler(&htim7);
   /* USER CODE BEGIN TIM7_IRQn 1 */
-
+  // printf("TIM7\r\n");
   /* USER CODE END TIM7_IRQn 1 */
 }
 
@@ -294,19 +326,6 @@ void DMA2_Stream7_IRQHandler(void)
 }
 
 /* USER CODE BEGIN 1 */
-void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim) {
-  if(htim->Instance == TIM3) {
-    // 处理TIM3编码器事件（电机1和电机2）
-    uint32_t count = TIM3->CNT;
-    // encoder3_count += (int16_t)count;  // 处理16位计数器溢出
-    TIM3->CNT = 0;  // 重置计数器
-}
-else if(htim->Instance == TIM4) {
-    // 处理TIM4编码器事件（电机3和电机4）
-    uint32_t count = TIM4->CNT;
-    // encoder4_count += (int16_t)count;  // 处理16位计数器溢出
-    TIM4->CNT = 0;  // 重置计数器
-}
-}
+
 
 /* USER CODE END 1 */

@@ -1,0 +1,18 @@
+#ifndef WHEEL_MOTOR_APP_H
+#define WHEEL_MOTOR_APP_H
+#pragma once
+#include "stdio.h"
+#include "wheel_motor.h"
+#include "chassis_controller.h"
+
+extern WheelMotor left_front;
+extern WheelMotor right_front;
+extern WheelMotor left_rear;
+extern WheelMotor right_rear;
+extern ChassisController chassis;
+
+void FourWheelMotorApp();
+void FourWheelInterruptCountReset();
+void ChassisControlUpdate();
+
+#endif // WHEEL_MOTOR_APP_H

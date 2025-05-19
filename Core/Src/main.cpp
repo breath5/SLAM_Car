@@ -27,9 +27,12 @@ extern "C" {
 #include "gpio.h"
 #include "stdio.h"
 }
+#include "wheel_motor_app.h"
+
 #include <iostream>
 
 extern TIM_HandleTypeDef        htim7;
+ static int TIM7_Interrupt_Count = 0;
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -92,7 +95,7 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-  // MX_TIM7_Init();  // 启动定时器
+   MX_TIM7_Init();  // 启动定时器
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -102,10 +105,14 @@ int main(void)
   HAL_TIM_Base_MspInit(&htim1);
   MX_TIM1_Init();
 
+  MX_TIM2_Init();
+  HAL_TIM_Base_MspInit(&htim2);
   MX_TIM3_Init();
   HAL_TIM_Encoder_MspInit(&htim3);
   MX_TIM4_Init();
   HAL_TIM_Encoder_MspInit(&htim4);
+  MX_TIM5_Init();
+  HAL_TIM_Encoder_MspInit(&htim5);
 
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();
@@ -140,16 +147,13 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
+  //   /* USER CODE END WHILE */
   printf("Hello World1\n");
-    std::cout << "Hello World2" << std::endl;
-    HAL_Delay(1000);
-    // 读取编码器计数值
-    int32_t encoder3 = TIM3->CNT;
-    int32_t encoder4 = TIM4->CNT;
-    
-    printf("TIM3计数: %ld | TIM4计数: %ld\r\n", encoder3, encoder4);
-    HAL_Delay(100);  // 降低输出频率
+  std::cout << "Hello World2" << std::endl;
+  HAL_Delay(1000);
+    FourWheelMotorApp();
+
+
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -241,15 +245,27 @@ void MX_TIM7_Init(void)
   * @param  htim : TIM handle
   * @retval None
   */
+  // 在定时器7中断回调函数中更新每个编码器定时器的计数值
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   /*
       * 1) 如果你想用 HAL 的延时函数：
       *    在此调用 HAL_IncTick() 以驱动 HAL_Delay()
       */
-  if (htim->Instance == TIM7) {
+  
+  if (htim->Instance == TIM7) {   // 定时器7中断, 1ms
     HAL_IncTick();
+    // 调用编码器的中断更新函数
+    TIM7_Interrupt_Count++;
+
+    if (TIM7_Interrupt_Count >= 100) {  // 100ms
+      // 执行定时器7的回调函数
+      TIM7_Interrupt_Count = 0;
+      FourWheelInterruptCountReset();
+    }
+
   }
+
   /*
       * 2) 如果你用 CMSIS-RTOS v2 (FreeRTOS) 作为底层：
       *    在此调用 osSystickHandler() 以进给 RTOS 时基
@@ -257,6 +273,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
       */
   // osSystickHandler();
 }
+
 
 /**
   * @brief  This function is executed in case of error occurrence.

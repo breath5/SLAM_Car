@@ -29,6 +29,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include <sys/times.h>
+#include <_ansi.h>
 
 
 /* Variables */
@@ -77,17 +78,17 @@ __attribute__((weak)) int _read(int file, char *ptr, int len)
   return len;
 }
 
-__attribute__((weak)) int _write(int file, char *ptr, int len)
-{
-  (void)file;
-  int DataIdx;
-
-  for (DataIdx = 0; DataIdx < len; DataIdx++)
-  {
-    __io_putchar(*ptr++);
-  }
-  return len;
-}
+// __attribute__((weak)) int _write(int file, char *ptr, int len)
+// {
+//   (void)file;
+//   int DataIdx;
+//
+//   for (DataIdx = 0; DataIdx < len; DataIdx++)
+//   {
+//     __io_putchar(*ptr++);
+//   }
+//   return len;
+// }
 
 int _close(int file)
 {
@@ -173,4 +174,29 @@ int _execve(char *name, char **argv, char **env)
   (void)env;
   errno = ENOMEM;
   return -1;
+}
+
+#include <stdio.h>
+#include <_ansi.h>
+#include "stm32f4xx_hal.h"
+extern UART_HandleTypeDef huart1;
+#pragma import(__use_no_semihosting)
+int _write_count = 0;
+// 添加标准文件描述符定义
+#define STDOUT_FILENO  1
+#define STDERR_FILENO  2
+
+struct __FILE {
+  int handle;
+};
+
+FILE __stdout;
+FILE __stdin;
+
+int _write(int file, char *ptr, int len) {
+  if (file == STDOUT_FILENO || file == STDERR_FILENO) {
+    HAL_UART_Transmit(&huart1, (uint8_t*)ptr, len, HAL_MAX_DELAY);
+  }
+  _write_count++;
+  return len;
 }

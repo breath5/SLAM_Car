@@ -52,12 +52,21 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 #新的C++源文件可以添加到工程的 target_sources 部分（通常放在主CMakeLists的user sources区域）。
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user sources here
+        
+        #应用层代码
+        Core/Cpp/App/Src/wheel_motor_app.cpp
+
+        #驱动层代码
+        Core/Cpp/Drivers/Src/wheel_motor.cpp
+        Core/Cpp/Drivers/Src/pid_controller.cpp
+        Core/Cpp/Drivers/Src/chassis_controller.cpp
+        
 )
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user defined include paths
+    Core/Cpp/Drivers/Inc
+    Core/Cpp/App/Inc
 )
 
 # Add project symbols (macros)
@@ -71,3 +80,12 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
 
     # Add user defined libraries
 )
+
+add_link_options(
+    -specs=nosys.specs
+    -specs=nano.specs
+    -u _printf_float
+    -u _scanf_float
+
+)
+
