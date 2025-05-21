@@ -55,6 +55,11 @@ public:
     // 设置最大RPM
     void SetMaxRPM(float max_rpm) { max_rpm_ = max_rpm; }
     float GetMaxRPM() const { return max_rpm_; }
+
+    // 新增：读取 PID 参数的接口
+    float GetKp() const;  // 读取比例系数 Kp
+    float GetKi() const;  // 读取积分系数 Ki
+    float GetKd() const;  // 读取微分系数 Kd
     
 private:
     int id_;

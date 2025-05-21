@@ -59,3 +59,19 @@ void PIDController::Reset() {
     prev_error_ = 0.0f;
     integral_ = 0.0f;
 }
+
+
+// 新增：读取比例系数 Kp
+float PIDController::GetKp() const {
+    return kp_;
+}
+
+// 新增：读取积分系数 Ki
+float PIDController::GetKi() const {
+    return ki_;
+}
+
+// 新增：读取微分系数 Kd
+float PIDController::GetKd() const {
+    return kd_;
+}

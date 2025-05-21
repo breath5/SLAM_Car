@@ -22,6 +22,7 @@
 #include "task.h"
 #include "main.h"
 #include "cmsis_os.h"
+#include "stdio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -117,8 +118,8 @@ void StartDefaultTask(void *argument)
   /* Infinite loop */
   for(;;)
   {
-    // printf("Starting default task\n");
-    osDelay(1);
+    printf("Starting default task\n");
+    osDelay(1000);
   }
   /* USER CODE END StartDefaultTask */
 }

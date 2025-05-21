@@ -13,6 +13,7 @@ void ChassisController::SetVelocity(float vx, float vy, float omega) {
     vy_ = vy;
     omega_ = omega;
     
+    // 根据麦轮布局，可能需要调整符号组合，建议验证坐标系方向
     // 麦轮运动学逆解，计算每个轮子的速度
     float v_lf = vy + vx - omega * (wheel_base_x_ + wheel_base_y_); // 左前
     float v_rf = vy - vx + omega * (wheel_base_x_ + wheel_base_y_); // 右前
@@ -27,30 +28,32 @@ void ChassisController::SetVelocity(float vx, float vy, float omega) {
 }
 
 void ChassisController::MoveForward(float speed) {
-    SetVelocity(0.0f, speed, 0.0f);
+    SetVelocity(0.0f, speed, 0.0f); // (vx, vy, ω)=(0,+,0)
 }
 
 void ChassisController::MoveBackward(float speed) {
-    SetVelocity(0.0f, -speed, 0.0f);
+    SetVelocity(0.0f, -speed, 0.0f); // (0,-,0)
 }
 
 void ChassisController::MoveLeft(float speed) {
-    SetVelocity(-speed, 0.0f, 0.0f);
+    SetVelocity(-speed, 0.0f, 0.0f); // (-,0,0)
 }
 
 void ChassisController::MoveRight(float speed) {
-    SetVelocity(speed, 0.0f, 0.0f);
+    SetVelocity(speed, 0.0f, 0.0f); // (+,0,0)
 }
 
 void ChassisController::Rotate(float angular_speed) {
-    SetVelocity(0.0f, 0.0f, angular_speed);
+    SetVelocity(0.0f, 0.0f, angular_speed);  // (0,0,+/-)
 }
 
 void ChassisController::Stop() {
-    SetVelocity(0.0f, 0.0f, 0.0f);
+    SetVelocity(0.0f, 0.0f, 0.0f);  // (0,0,0)
 }
 
 void ChassisController::Update(float dt) {
+     // 建议增加dt有效性检查
+     if(dt <= 0 || dt > 0.1f) return;
     // 更新每个轮子的速度控制
     left_front_.UpdateSpeedControl(dt);
     right_front_.UpdateSpeedControl(dt);

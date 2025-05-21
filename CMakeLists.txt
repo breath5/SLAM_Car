@@ -43,6 +43,11 @@ add_executable(${CMAKE_PROJECT_NAME})
 
 # Add STM32CubeMX generated sources
 add_subdirectory(cmake/stm32cubemx)
+# 添加 cJSON 库
+add_subdirectory(Core/Cpp/ThirdParty/cJSON)
+include_directories(Core/Cpp/ThirdParty/cJSON)
+
+
 
 # Link directories setup
 target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
@@ -55,11 +60,13 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         
         #应用层代码
         Core/Cpp/App/Src/wheel_motor_app.cpp
+        Core/Cpp/App/Src/uart_app.cpp
 
         #驱动层代码
         Core/Cpp/Drivers/Src/wheel_motor.cpp
         Core/Cpp/Drivers/Src/pid_controller.cpp
         Core/Cpp/Drivers/Src/chassis_controller.cpp
+        Core/Cpp/Drivers/Src/uart_class.cpp
         
 )
 
@@ -77,7 +84,7 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
 # Add linked libraries
 target_link_libraries(${CMAKE_PROJECT_NAME}
     stm32cubemx
-
+    cjson
     # Add user defined libraries
 )
 
@@ -86,6 +93,5 @@ add_link_options(
     -specs=nano.specs
     -u _printf_float
     -u _scanf_float
-
 )
 

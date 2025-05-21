@@ -19,6 +19,11 @@ public:
     
     // 重置PID状态
     void Reset();
+
+    // 新增：读取PID参数的声明
+    float GetKp() const;  // 读取比例系数 Kp
+    float GetKi() const;  // 读取积分系数 Ki
+    float GetKd() const;  // 读取微分系数 Kd
     
 private:
     float kp_;        // 比例系数

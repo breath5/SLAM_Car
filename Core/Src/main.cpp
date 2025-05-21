@@ -28,11 +28,14 @@ extern "C" {
 #include "stdio.h"
 }
 #include "wheel_motor_app.h"
+#include "uart_app.h"
 
 #include <iostream>
 
 extern TIM_HandleTypeDef        htim7;
- static int TIM7_Interrupt_Count = 0;
+extern TaskHandle_t chassis_task_handle;
+ static uint8_t TIM7_Interrupt_Count = 0;
+static uint8_t TIM7_Interrupt_ChassisCount = 0;
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -119,6 +122,15 @@ int main(void)
   HAL_UART_MspInit(&huart1);
   HAL_UART_MspInit(&huart2);
 
+  // /* 添加优先级冲突检查（FreeRTOS最高可管理优先级为5） */
+  // printf("configMAX_SYSCALL_INTERRUPT_PRIORITY: %d\n", configMAX_SYSCALL_INTERRUPT_PRIORITY);
+  // if (configMAX_SYSCALL_INTERRUPT_PRIORITY > 5) {
+  //   printf("TIM7_IRQn: %d\n", TIM7_IRQn);
+  //   Error_Handler();
+  // }
+  // /* 确保中断优先级不高于 FreeRTOS 最高可管理优先级 */
+  // configASSERT(0 > configMAX_SYSCALL_INTERRUPT_PRIORITY);
+
   /* USER CODE BEGIN 2 */
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
@@ -130,16 +142,19 @@ int main(void)
   __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, auto_reload / 2);
   __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, auto_reload / 2);
   __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, auto_reload / 2);
+
+  UARTApp_Init();
   /* USER CODE END 2 */
+  FourWheelMotorApp();
 
   /* Init scheduler */
-  // osKernelInitialize();
+  osKernelInitialize();
 
   /* Call init function for freertos objects (in cmsis_os2.c) */
   // MX_FREERTOS_Init();
 
   /* Start scheduler */
-  // osKernelStart();
+  osKernelStart();
 
   /* We should never get here as control is now taken by the scheduler */
 
@@ -148,11 +163,11 @@ int main(void)
   while (1)
   {
   //   /* USER CODE END WHILE */
-  printf("Hello World1\n");
-  std::cout << "Hello World2" << std::endl;
+  // printf("Hello World1\n");
+  // std::cout << "Hello World2" << std::endl;
   HAL_Delay(1000);
-    FourWheelMotorApp();
-
+    // FourWheelMotorApp();
+    // uart.sendLine("UART通信初始化完成!");
 
     /* USER CODE BEGIN 3 */
   }
@@ -226,7 +241,9 @@ void MX_TIM7_Init(void)
   /* 2. NVIC 中断配置 */
   HAL_NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_4);
   /* TIM7 中断抢占优先级设为 0（最紧急），可根据系统需求调整 */
-  HAL_NVIC_SetPriority(TIM7_IRQn, 0, 0);
+  // 在TIM7中断配置处添加检查
+  HAL_NVIC_SetPriority(TIM7_IRQn, 5, 0);
+
   HAL_NVIC_EnableIRQ(TIM7_IRQn);
 
   /* 3. 启动带中断的基础定时器 */
@@ -252,16 +269,32 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
       * 1) 如果你想用 HAL 的延时函数：
       *    在此调用 HAL_IncTick() 以驱动 HAL_Delay()
       */
-  
+
   if (htim->Instance == TIM7) {   // 定时器7中断, 1ms
     HAL_IncTick();
     // 调用编码器的中断更新函数
     TIM7_Interrupt_Count++;
+    // 调用底盘控制的中断更新函数
+    TIM7_Interrupt_ChassisCount++;
+
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
     if (TIM7_Interrupt_Count >= 100) {  // 100ms
       // 执行定时器7的回调函数
       TIM7_Interrupt_Count = 0;
       FourWheelInterruptCountReset();
+    }
+    if (TIM7_Interrupt_ChassisCount >= 10) {  //10ms
+      TIM7_Interrupt_ChassisCount = 0;
+      // 发送任务通知到底盘控制任务
+      if (chassis_task_handle != NULL) {
+        // printf("chassis_task_handle:%p\n", chassis_task_handle);
+        xTaskNotifyFromISR(chassis_task_handle,
+                         1,  // 通知值
+                         eSetValueWithOverwrite,
+                         &xHigherPriorityTaskWoken);
+        portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+      }
     }
 
   }
@@ -279,15 +312,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   * @brief  This function is executed in case of error occurrence.
   * @retval None
   */
-void Error_Handler(void)
-{
-  /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
-  __disable_irq();
-  while (1)
-  {
-  }
-  /* USER CODE END Error_Handler_Debug */
+void Error_Handler(void) {
+    __disable_irq();
+    printf("System Error! Check task handles and priorities\n");
+    while (1) {
+        // 添加LED闪烁等可视指示
+    }
 }
 
 #ifdef  USE_FULL_ASSERT
@@ -306,3 +336,4 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
+

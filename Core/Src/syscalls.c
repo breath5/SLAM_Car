@@ -195,7 +195,7 @@ FILE __stdin;
 
 int _write(int file, char *ptr, int len) {
   if (file == STDOUT_FILENO || file == STDERR_FILENO) {
-    HAL_UART_Transmit(&huart1, (uint8_t*)ptr, len, HAL_MAX_DELAY);
+    HAL_UART_Transmit(&huart1, (uint8_t*)ptr, len, HAL_MAX_DELAY); 
   }
   _write_count++;
   return len;

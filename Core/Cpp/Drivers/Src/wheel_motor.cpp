@@ -48,14 +48,14 @@ float WheelMotor::CalculateLinearSpeed() {
     last_count_ = current_count_;
     // 使用滤波器
     int32_t filtered_count_diff = ApplyFilter(count_diff);
-    printf("count_diff=%d\n", filtered_count_diff);
+    // printf("count_diff=%d\n", filtered_count_diff);
     // 考虑方向
     filtered_count_diff *= static_cast<int>(direction_);
     float motor_shaft_revolutions = (float)filtered_count_diff / (PULSES_PER_ROUND * 4);
     float wheel_revolutions = motor_shaft_revolutions / REDUCTION_RATIO;
     linear_speed_ = wheel_revolutions * 2.0f * 3.1415926f * WHEEL_RADIUS / sample_time_;
     int32_t temp = linear_speed_ * 1000;
-    printf("linear_speed=%d\n", temp);
+    // printf("linear_speed=%d\n", temp);
     return linear_speed_;
 }
 
@@ -212,4 +212,17 @@ int32_t WheelMotor::ApplyFilter(int32_t new_value) {
     // 去掉最大值和最小值后求平均
     sum -= (max_value + min_value);
     return sum / (FILTER_SIZE - 2);
+}
+
+// 新增：读取 PID 参数的实现
+float WheelMotor::GetKp() const {
+    return pid_controller_.GetKp();
+}
+
+float WheelMotor::GetKi() const {
+    return pid_controller_.GetKi();
+}
+
+float WheelMotor::GetKd() const {
+    return pid_controller_.GetKd();
 }
