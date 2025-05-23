@@ -53,7 +53,7 @@ void ChassisController::Stop() {
 
 void ChassisController::Update(float dt) {
      // 建议增加dt有效性检查
-     if(dt <= 0 || dt > 0.1f) return;
+    //  if(dt <= 0 || dt > 0.013f) return;
     // 更新每个轮子的速度控制
     left_front_.UpdateSpeedControl(dt);
     right_front_.UpdateSpeedControl(dt);

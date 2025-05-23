@@ -32,12 +32,16 @@ extern "C" {
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
     if (huart->Instance == USART2) {
-        // printf("USART2 revice data\r\n");
-        // UART2_RxCpltCallback();
-        // 发送任务通知（带中断安全版本）
-        vTaskNotifyGiveFromISR(xUARTProcessTaskHandle, &xHigherPriorityTaskWoken);
-        // 如果有更高优先级任务需要唤醒，执行上下文切换
-        portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+        // 对于中断模式，直接在中断中处理
+        if (uart2 != nullptr) {
+            if (uart2->GetReceiveMode() == UART_RECEIVE_MODE_IT) {
+                uart2->RxITCallback();
+            } else {
+                // DMA模式下，继续使用任务通知
+                vTaskNotifyGiveFromISR(xUARTProcessTaskHandle, &xHigherPriorityTaskWoken);
+                portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+            }
+        }
     }
 }
 
@@ -51,7 +55,7 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
 // 全局回调函数，用于处理接收到的JSON数据
 static void JsonDataCallback(const char* jsonStr, uint16_t len) {
 
-    printf("Received complete JSON (%d bytes): %s\r\n", len, jsonStr);
+    // printf("Received complete JSON (%d bytes): %s\r\n", len, jsonStr);
     
     // 解析JSON
     cJSON* root = cJSON_Parse(jsonStr);
@@ -64,63 +68,98 @@ static void JsonDataCallback(const char* jsonStr, uint16_t len) {
     cJSON* idItem = cJSON_GetObjectItem(root, "ID");
     if (idItem && cJSON_IsNumber(idItem)) {
         int id = idItem->valueint;
+        int32_t temp_pid = 0;
         printf("Parsed ID: %d\r\n", id);
-        
-        // 获取PID参数
+
+        // 分别检查每个参数
         cJSON* pItem = cJSON_GetObjectItem(root, "P");
         cJSON* iItem = cJSON_GetObjectItem(root, "I");
         cJSON* dItem = cJSON_GetObjectItem(root, "D");
-        
-        if (pItem && iItem && dItem && 
-            cJSON_IsNumber(pItem) && 
-            cJSON_IsNumber(iItem) && 
-            cJSON_IsNumber(dItem)) {
-            
-            float p = (float)pItem->valuedouble;
-            float i = (float)iItem->valuedouble;
-            float d = (float)dItem->valuedouble;
-            int32_t temp_pid = p * 1000;
-            
-            printf("Parsed PID: P=%d, I=%d, D=%.2f\r\n", temp_pid, i, d);
-            
-            // 这里可以根据ID设置不同电机的PID参数
-            // 例如：
-            // if (id == 1) {
-            //     left_front.SetPID(p, i, d);
-            // } else if (id == 2) {
-            //     right_front.SetPID(p, i, d);
-            // } ...
-            if(id == 1){
-                left_front.SetPIDParams(p, i, d);
-            }else if(id == 2){
-                right_front.SetPIDParams(p, i, d);
-            }else if(id == 3){
-                left_rear.SetPIDParams(p, i, d);
-            }else if(id == 4){
-                right_rear.SetPIDParams(p, i, d);
-            }
+        cJSON* TargetSpeedItem = cJSON_GetObjectItem(root, "TargetSpeed");
 
-        } else {
-            printf("Error: Missing or invalid PID parameters\r\n");
+        //运动控制
+        if(id == 5){
+            if (pItem && cJSON_IsNumber(pItem)) {
+                uint8_t p = (uint8_t)pItem->valuedouble;
+                switch(id) {
+                    //小车移动控制
+                    case 1: chassis.MoveForward(0.2f);; break;  // 前进
+                    case 2: chassis.MoveBackward(0.2f); break; // 后退
+                    case 3: chassis.MoveLeft(0.2f); break;    // 左转
+                    case 4: chassis.MoveRight(0.2f); break;   // 右转
+                    case 5: chassis.Stop(); break;         // 停止
+                }
+            }
         }
+
+        // 单独处理每个参数
+        if (pItem && cJSON_IsNumber(pItem)) {
+            float p = (float)pItem->valuedouble;
+            temp_pid = p * 1000;
+            printf("Set P: %d\r\n", temp_pid);
+            // 根据ID设置对应电机
+            switch(id) {
+                case 1: left_front.SetKp(p); break;
+                case 2: right_front.SetKp(p); break;
+                case 3: left_rear.SetKp(p); break;
+                case 4: right_rear.SetKp(p); break;
+                 
+            }
+        }
+
+        if (iItem && cJSON_IsNumber(iItem)) {
+            float i = (float)iItem->valuedouble;
+            temp_pid = i * 1000;
+            printf("Set I: %d\r\n", temp_pid);
+            switch(id) {
+                case 1: left_front.SetKi(i); break;
+                case 2: right_front.SetKi(i); break;
+                case 3: left_rear.SetKi(i); break;
+                case 4: right_rear.SetKi(i); break;
+            }
+        }
+
+        if (dItem && cJSON_IsNumber(dItem)) {
+            float d = (float)dItem->valuedouble;
+            temp_pid = d * 1000;
+            printf("Set D: %d\r\n", temp_pid);
+            switch(id) {
+                case 1: left_front.SetKd(d); break;
+                case 2: right_front.SetKd(d); break;
+                case 3: left_rear.SetKd(d); break;
+                case 4: right_rear.SetKd(d); break;
+            }
+        }
+
+        if(TargetSpeedItem && cJSON_IsNumber(TargetSpeedItem)) {
+            float TargetSpeed = (float)TargetSpeedItem->valuedouble;
+            switch(id) {
+                case 1: left_front.SetTargetSpeed(TargetSpeed); break;
+                case 2: right_front.SetTargetSpeed(TargetSpeed); break;
+                case 3: left_rear.SetTargetSpeed(TargetSpeed); break;
+                case 4: right_rear.SetTargetSpeed(TargetSpeed); break;
+            }
+        }
+
     } else {
         printf("Error: Missing or invalid ID\r\n");
     }
-    
     // 释放JSON对象
     cJSON_Delete(root);
 }
 
 // 处理UART接收到的数据的任务
 static void UARTProcessTask(void* pvParameters) {
+    printf("xTaskCreate:UARTProcessTask created;  uxPriority:15; usStackDepth:256\r\n");
     while (1) {
         // 任务主循环，可以添加其他处理逻辑
         // 等待任务通知（永久阻塞）
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
         // 在任务上下文中处理回调
         if (uart2 != nullptr) {
-// printf("UARTProcessTask Received data\r\n");
+            // printf("UARTProcessTask Received data\r\n");
             uart2->RxCpltCallback();
+            // uart2->RxITCallback();
         }
         vTaskDelay(pdMS_TO_TICKS(10));
     }
@@ -141,16 +180,15 @@ void UARTApp_Init(void) {
     // 设置回调函数
     uart2->SetRxCallback(JsonDataCallback);
     
-    // 启动接收
-    uart2->StartReceive();
+    // 设置为中断接收模式
+    uart2->SetReceiveMode(UART_RECEIVE_MODE_IT);
 
-    printf("UART Application initialized\r\n");
+    printf("UART2: Application initialized. RxCallback:JsonDataCallback. Mode:IT\r\n");
     // uart2->PrintString("Hello, UART!\r\n");
     // 创建UART处理任务
-    xTaskCreate(UARTProcessTask, "UARTProcess", 256, NULL, 15, &xUARTProcessTaskHandle);
+    xTaskCreate(UARTProcessTask, "UARTProcess", 256, NULL, 20, &xUARTProcessTaskHandle);
 
 }
-
 
 #ifdef __cplusplus
 }

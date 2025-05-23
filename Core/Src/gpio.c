@@ -50,6 +50,31 @@ void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
+    /* 配置电机方向控制引脚 */
+    GPIO_InitTypeDef GPIO_InitStruct = {0};
+    // GPIOB配置（LF和RF电机）
+    GPIO_InitStruct.Pin = GPIO_PIN_10|GPIO_PIN_11|GPIO_PIN_0|GPIO_PIN_1;
+    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+    // GPIOE配置（LR和RR电机）
+    GPIO_InitStruct.Pin = GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4;
+    HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+
+    /* 设置初始电平 */
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10|GPIO_PIN_11|GPIO_PIN_0|GPIO_PIN_1, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(GPIOE, GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4, GPIO_PIN_RESET);
+
+    //  配置小车检测黑线GPIO初始化结构体
+    GPIO_InitTypeDef GPIO_InitStruct = {0};
+    GPIO_InitStruct.Pin = GPIO_PIN_15;       // 使用PB0引脚
+    GPIO_InitStruct.Mode = GPIO_MODE_INPUT; // 输入模式
+    GPIO_InitStruct.Pull = GPIO_PULLUP;     // 上拉电阻使能
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW; // 低速模式
+
+    HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 }
 
 /* USER CODE BEGIN 2 */

@@ -11,9 +11,13 @@
 #include "semphr.h"
 
 // 定义缓冲区大小
-#define UART_RX_BUFFER_SIZE 256
+#define UART_RX_BUFFER_SIZE 128   //256
 #define UART_TX_BUFFER_SIZE 512  // 发送缓冲区大小
-#define JSON_BUFFER_SIZE 512
+#define JSON_BUFFER_SIZE 128   //512
+
+// 接收模式枚举
+#define UART_RECEIVE_MODE_DMA 0   // DMA接收模式
+#define UART_RECEIVE_MODE_IT  1   // 中断接收模式
 
 // 回调函数类型定义
 typedef void (*UARTRxCallback)(const char* jsonStr, uint16_t len);
@@ -39,6 +43,11 @@ private:
     int bracketCount;                           // 大括号计数器，用于JSON帧检测
     bool inJsonFrame;                           // 是否在JSON帧内
 
+    // 新增：中断接收模式相关变量
+    uint8_t receiveMode;                        // 接收模式
+    uint8_t itRxByte;                           // 中断接收的单个字节
+    bool isReceiving;                           // 是否正在接收数据
+
 public:
     UART(UART_HandleTypeDef* huart);
     ~UART();
@@ -49,14 +58,26 @@ public:
     // 启动接收
     void StartReceive();
     
+    // 新增：设置接收模式
+    void SetReceiveMode(uint8_t mode);
+    
+    // 新增：启动中断接收
+    void StartITReceive();
+    
     // 设置接收回调函数
     void SetRxCallback(UARTRxCallback callback);
     
     // DMA接收完成回调
     void RxCpltCallback();
     
+    // 新增：中断接收回调
+    void RxITCallback();
+    
     // 处理接收到的数据
     void ProcessData(uint8_t* buffer, uint16_t size);
+    
+    // 新增：处理单个接收到的字节
+    void ProcessByte(uint8_t byte);
     
     // 检测并处理JSON帧
     void ProcessJsonFrame(uint8_t byte);
@@ -78,6 +99,11 @@ public:
     
     // 打印字符串
     HAL_StatusTypeDef PrintString(const char* str);
+    
+    // 在public部分添加
+    uint8_t GetReceiveMode() const {
+        return receiveMode;
+    }
 };
 
 #endif // UART_CLASS_H

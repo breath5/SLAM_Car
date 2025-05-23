@@ -102,7 +102,7 @@ int main(void)
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
-  MX_GPIO_Init();
+  MX_GPIO_Init();   // 初始化GPIO时钟和电机的引脚
   MX_DMA_Init();
 
   HAL_TIM_Base_MspInit(&htim1);
@@ -132,16 +132,6 @@ int main(void)
   // configASSERT(0 > configMAX_SYSCALL_INTERRUPT_PRIORITY);
 
   /* USER CODE BEGIN 2 */
-  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
-  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
-  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4);
-  // 设置50%占空比（自动获取ARR值确保准确性）
-  uint32_t auto_reload = __HAL_TIM_GET_AUTORELOAD(&htim1);
-  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, auto_reload / 2);
-  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, auto_reload / 2);
-  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, auto_reload / 2);
-  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, auto_reload / 2);
 
   UARTApp_Init();
   /* USER CODE END 2 */
@@ -162,16 +152,12 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-  //   /* USER CODE END WHILE */
-  // printf("Hello World1\n");
-  // std::cout << "Hello World2" << std::endl;
   HAL_Delay(1000);
     // FourWheelMotorApp();
     // uart.sendLine("UART通信初始化完成!");
 
-    /* USER CODE BEGIN 3 */
   }
-  /* USER CODE END 3 */
+
 }
 
 /**
@@ -243,7 +229,6 @@ void MX_TIM7_Init(void)
   /* TIM7 中断抢占优先级设为 0（最紧急），可根据系统需求调整 */
   // 在TIM7中断配置处添加检查
   HAL_NVIC_SetPriority(TIM7_IRQn, 5, 0);
-
   HAL_NVIC_EnableIRQ(TIM7_IRQn);
 
   /* 3. 启动带中断的基础定时器 */
@@ -251,6 +236,9 @@ void MX_TIM7_Init(void)
   {
     Error_Handler();
   }
+  printf("[NVIC Priority Group] NVIC_PRIORITYGROUP_4\r\n"
+         "[IRQ Priorities] TIM7:5(p=5,s=0) | USART1:7 | USART2:6\r\n"
+         "[IRQ Priorities] DMA:5 | TIM2/3/4/5:1\r\n");
 }
 /* USER CODE END 4 */
 
@@ -279,16 +267,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
-    if (TIM7_Interrupt_Count >= 100) {  // 100ms
+    if (TIM7_Interrupt_Count >= 10) {  // 10ms 更新编码器计数
       // 执行定时器7的回调函数
       TIM7_Interrupt_Count = 0;
       FourWheelInterruptCountReset();
     }
-    if (TIM7_Interrupt_ChassisCount >= 10) {  //10ms
+    if (TIM7_Interrupt_ChassisCount >= 10) {  //10ms 要与底盘控制的周期一致 0.01s
       TIM7_Interrupt_ChassisCount = 0;
       // 发送任务通知到底盘控制任务
       if (chassis_task_handle != NULL) {
-        // printf("chassis_task_handle:%p\n", chassis_task_handle);
         xTaskNotifyFromISR(chassis_task_handle,
                          1,  // 通知值
                          eSetValueWithOverwrite,

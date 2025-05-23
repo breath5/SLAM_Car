@@ -1,6 +1,7 @@
 #include "uart_class.h"
 #include <stdio.h>
 
+// 在构造函数中初始化新增变量
 UART::UART(UART_HandleTypeDef* huart) : 
     huart(huart),
     activeBuffer(rxBuffer1),
@@ -9,7 +10,10 @@ UART::UART(UART_HandleTypeDef* huart) :
     rxCallback(nullptr),
     bracketCount(0),
     inJsonFrame(false),
-    isTxBusy(false) {
+    isTxBusy(false),
+    receiveMode(UART_RECEIVE_MODE_DMA),  // 默认使用DMA模式
+    itRxByte(0),
+    isReceiving(false) {
     
     // 创建信号量
     bufferSwitchSemaphore = xSemaphoreCreateBinary();
@@ -24,6 +28,44 @@ UART::UART(UART_HandleTypeDef* huart) :
     memset(rxBuffer2, 0, UART_RX_BUFFER_SIZE);
     memset(jsonBuffer, 0, JSON_BUFFER_SIZE);
     memset(txBuffer, 0, UART_TX_BUFFER_SIZE);
+}
+
+// 设置接收模式
+void UART::SetReceiveMode(uint8_t mode) {
+    // 停止当前接收
+    HAL_UART_AbortReceive(huart);
+    
+    receiveMode = mode;
+    
+    // 根据模式重新启动接收
+    if (receiveMode == UART_RECEIVE_MODE_DMA) {
+        StartReceive();
+    } else {
+        StartITReceive();
+    }
+}
+
+// 启动中断接收
+void UART::StartITReceive() {
+    isReceiving = true;
+    HAL_UART_Receive_IT(huart, &itRxByte, 1);
+}
+
+// 中断接收回调
+void UART::RxITCallback() {
+    // 处理接收到的字节
+    ProcessByte(itRxByte);
+    
+    // 继续接收下一个字节
+    if (isReceiving) {
+        HAL_UART_Receive_IT(huart, &itRxByte, 1);
+    }
+}
+
+// 处理单个接收到的字节
+void UART::ProcessByte(uint8_t byte) {
+    // 直接处理JSON帧
+    ProcessJsonFrame(byte);
 }
 
 UART::~UART() {
