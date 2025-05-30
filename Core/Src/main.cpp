@@ -29,7 +29,7 @@ extern "C" {
 }
 #include "wheel_motor_app.h"
 #include "uart_app.h"
-
+#include "IMU_App.h"
 #include <iostream>
 
 extern TIM_HandleTypeDef        htim7;
@@ -119,6 +119,7 @@ int main(void)
 
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();
+  MX_USART3_UART_Init();
   HAL_UART_MspInit(&huart1);
   HAL_UART_MspInit(&huart2);
 
@@ -134,6 +135,12 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   UARTApp_Init();
+
+  // 初始化IMU
+  IMU_App::getInstance().init();
+  // 设置目标偏航角为0度
+  IMU_App::getInstance().setTargetYaw(0.0f);
+
   /* USER CODE END 2 */
   FourWheelMotorApp();
 
@@ -239,6 +246,40 @@ void MX_TIM7_Init(void)
   printf("[NVIC Priority Group] NVIC_PRIORITYGROUP_4\r\n"
          "[IRQ Priorities] TIM7:5(p=5,s=0) | USART1:7 | USART2:6\r\n"
          "[IRQ Priorities] DMA:5 | TIM2/3/4/5:1\r\n");
+}
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+    if(huart->Instance == USART3) {
+        uint8_t data = huart->Instance->DR;
+        IMU_App::getInstance().uartRxCallback(data);
+    }
+}
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+    if (htim->Instance == TIM7) {
+        TIM7_Interrupt_Count++;
+        TIM7_Interrupt_ChassisCount++;
+        
+        // 每10ms执行一次IMU角度校正任务
+        if (TIM7_Interrupt_Count >= 10) {
+            TIM7_Interrupt_Count = 0;
+            IMU_App::getInstance().yawCorrectionTask();
+        }
+        
+        BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+
+        if (TIM7_Interrupt_ChassisCount >= 10) {  //10ms 要与底盘控制的周期一致 0.01s
+            TIM7_Interrupt_ChassisCount = 0;
+            // 发送任务通知到底盘控制任务
+            if (chassis_task_handle != NULL) {
+                xTaskNotifyFromISR(chassis_task_handle,
+                                 1,  // 通知值
+                                 eSetValueWithOverwrite,
+                                 &xHigherPriorityTaskWoken);
+                portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+            }
+        }
+    }
 }
 /* USER CODE END 4 */
 

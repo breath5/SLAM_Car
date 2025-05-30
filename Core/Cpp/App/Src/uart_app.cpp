@@ -3,6 +3,7 @@
 #include "usart.h"
 #include "cJSON.h"
 #include <stdio.h>
+#include "IMU.h"
 
 // 全局UART实例
 static UART* uart2 = nullptr;
@@ -42,6 +43,12 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
                 portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
             }
         }
+    }
+
+    if(huart->Instance == USART3)
+    {
+        uint8_t data = huart->Instance->DR;
+        IMU_App::getInstance().uartRxCallback(data);
     }
 }
 
@@ -83,11 +90,12 @@ static void JsonDataCallback(const char* jsonStr, uint16_t len) {
                 uint8_t p = (uint8_t)pItem->valuedouble;
                 switch(id) {
                     //小车移动控制
-                    case 1: chassis.MoveForward(0.2f);; break;  // 前进
-                    case 2: chassis.MoveBackward(0.2f); break; // 后退
-                    case 3: chassis.MoveLeft(0.2f); break;    // 左转
-                    case 4: chassis.MoveRight(0.2f); break;   // 右转
-                    case 5: chassis.Stop(); break;         // 停止
+                    // case 1: chassis.MoveForward(0.2f);; break;  // 前进
+                    // case 2: chassis.MoveBackward(0.2f); break; // 后退
+                    // case 3: chassis.MoveLeft(0.2f); break;    // 左转
+                    // case 4: chassis.MoveRight(0.2f); break;   // 右转
+                    // // case 5: chassis.Rotate(90); break;         // 停止
+                    // case 6: chassis.Stop(); break;         // 停止
                 }
             }
         }

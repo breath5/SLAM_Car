@@ -4,7 +4,7 @@
 PIDController::PIDController(float kp, float ki, float kd)
     : kp_(kp), ki_(ki), kd_(kd),
       prev_error_(0.0f), prev_prev_error_(0.0f), prev_output_(0.0f),
-      min_output_(-0.5f), max_output_(0.5f) {
+      min_output_(-0.4f), max_output_(0.4f) {
 }
 
 float PIDController::Compute(float setpoint, float measurement, float dt) {

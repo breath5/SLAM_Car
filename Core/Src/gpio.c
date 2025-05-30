@@ -68,7 +68,6 @@ void MX_GPIO_Init(void)
     HAL_GPIO_WritePin(GPIOE, GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4, GPIO_PIN_RESET);
 
     //  配置小车检测黑线GPIO初始化结构体
-    GPIO_InitTypeDef GPIO_InitStruct = {0};
     GPIO_InitStruct.Pin = GPIO_PIN_15;       // 使用PB0引脚
     GPIO_InitStruct.Mode = GPIO_MODE_INPUT; // 输入模式
     GPIO_InitStruct.Pull = GPIO_PULLUP;     // 上拉电阻使能

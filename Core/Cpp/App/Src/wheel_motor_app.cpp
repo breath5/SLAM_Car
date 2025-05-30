@@ -124,6 +124,9 @@ static void CarMotionControlTask(void *argument) {
 
 /*******************************************************************************/
         Speed_observation();   //打印出速度
+        // if(HAL_GPIO_ReadPin(GPIOE, GPIO_PIN_15) == GPIO_PIN_SET) {  // 检测到黑线,输出高电平
+        //     printf("Detect the black line\r\n");
+        // }
         vTaskDelay(10 / portTICK_PERIOD_MS);
         // vTaskDelay(xFrequency); // 延时等待下一个周期,不要随便修改周期,要与定时器中断周期一致
     }
@@ -138,16 +141,19 @@ void FourWheelMotorApp() {
     right_rear.Init();
 
     // 设置PID参数（根据实际调试调整）
-    left_front.SetPIDParams(0.5f, 0.1f, 0.01f);  //3.9f, 0.001f, 0.0003f
-    right_front.SetPIDParams(0.5f, 0.1f, 0.01f);  //0.262f, 0.0001f, 0.001f
-    left_rear.SetPIDParams(0.5f, 0.1f, 0.01f);  //0.262f, 0.0001f, 0.001f
-    right_rear.SetPIDParams(0.5f, 0.1f, 0.01f);  //0.798f, 0.0001f, 0.002f
+    left_front.SetPIDParams(0.02f, 0.264f, 0.05f);  //3.9f, 0.001f, 0.0003f
+    right_front.SetPIDParams(0.02f, 0.264f, 0.05f);  //0.262f, 0.0001f, 0.001f
+    left_rear.SetPIDParams(0.019f, 0.264f, 0.05f);  //0.262f, 0.0001f, 0.001f
+    right_rear.SetPIDParams(0.019f, 0.264f, 0.05f);  //0.798f, 0.0001f, 0.002f
+
+    // chassis.MoveForward(0.2f);
 
     // m/s :0.2f 每秒前进20厘米
-    left_front.SetTargetSpeed(0.2f);
-    right_front.SetTargetSpeed(0.2f);
-    left_rear.SetTargetSpeed(0.2f);
-    right_rear.SetTargetSpeed(0.2f);
+    // left_front.SetTargetSpeed(0.15f)
+    // right_front.SetTargetSpeed(0.15f);
+    // left_rear.SetTargetSpeed(0.15f);
+    // right_rear.SetTargetSpeed(0.15f);
+    chassis.MoveRight(0.15f);
 
     // left_front.SetLinearSpeed(0.2f);
     // right_front.SetLinearSpeed(0.2f);
@@ -159,7 +165,7 @@ void FourWheelMotorApp() {
               "ChassisCtrl",
               512,//configMINIMAL_STACK_SIZE * 4,
               NULL,
-              tskIDLE_PRIORITY + 12,  // 较高优先级
+              tskIDLE_PRIORITY + 13,  // 较高优先级
               &chassis_task_handle);
     printf("xTaskCreate:ChassisControlTask created; uxPriority:10; usStackDepth:512\r\n");
 

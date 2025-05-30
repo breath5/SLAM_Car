@@ -59,12 +59,23 @@ float WheelMotor::CalculateLinearSpeed() {
     // 计算原始速度
     float motor_shaft_revolutions = (float)filtered_count_diff / (PULSES_PER_ROUND * 4);
     float wheel_revolutions = motor_shaft_revolutions / REDUCTION_RATIO;
-    float raw_speed = wheel_revolutions * 3.1415926f * WHEEL_DN / sample_time_;
+    float raw_speed  = wheel_revolutions * 3.1415926f * WHEEL_DN / sample_time_;
+    
     // 多级滤波处理
     // float speed1 = ApplyMedianFilter(raw_speed);     // 中值滤波
-    // float speed2 = ApplyKalmanFilter(speed1);        // 卡尔曼滤波
-    // linear_speed_ = ApplySpeedFilter(speed1);         // 滑动平均滤波 
-    linear_speed_ = raw_speed;
+    linear_speed_ = ApplyKalmanFilter(raw_speed );        // 卡尔曼滤波
+    // linear_speed_ = ApplySpeedFilter(linear_speed_ );         // 滑动平均滤波
+    
+    // 应用高通滤波
+    // float highpass_speed = ApplyHighPassFilter(raw_speed);  // 高通滤波
+    
+    // 可以选择直接使用高通滤波结果，或与原始速度结合
+    // float Median_speed = raw_speed + highpass_speed;  // 原始速度加上高频成分
+
+    //  linear_speed_ = ApplyMedianFilter(Median_speed); 
+    // 或者直接使用高通滤波结果
+    // linear_speed_ = highpass_speed;
+    
     return linear_speed_;
 }
 
@@ -143,12 +154,17 @@ void WheelMotor::UpdateSpeedControl(float dt) {
    
     // 对PID输出进行滤波处理
     // 可以选择以下一种或多种滤波方式
-    // pid_output = ApplyPIDOutputLowPassFilter(pid_output);     // 低通滤波 
+    pid_output = ApplyPIDOutputLowPassFilter(pid_output);     // 低通滤波 
     // pid_output = ApplyPIDOutputFilter(pid_output);  // 滑动平均滤波
     // pid_output = ApplyPIDOutputMedianFilter(pid_output); // 中值滤波
     // pid_output = ApplyPIDOutputRampFilter(pid_output, dt); // 斜坡滤波(限制变化率)
     
     // 非线性映射，增强小控制量时的响应灵敏度，同时平滑大控制量的变化率
+        // 非线性映射，增强小控制量时的响应灵敏度，同时平滑大控制量的变化率，实际效果：改善电机低速线性度，防止高速区突变。
+    // float non_linear_output = std::copysign(
+    //         std::pow(std::abs(pid_output), 0.8f), 
+    //         pid_output
+    //     );
     float non_linear_output = pid_output;
     
     // 方向控制
@@ -364,3 +380,16 @@ void WheelMotor::SetKalmanR(float r) { kalman_r_ = r; }
 void WheelMotor::SetKalmanP(float p) { kalman_p_ = p; }
 void WheelMotor::SetKalmanK(float k) { kalman_k_ = k; }
 void WheelMotor::SetKalmanX(float x) { kalman_x_ = x; }
+
+// 高通滤波
+float WheelMotor::ApplyHighPassFilter(float new_speed) {
+    // 高通滤波公式: y(n) = α·(y(n-1) + x(n) - x(n-1))
+    // α越大，通过的高频成分越多
+    float filtered_speed = highpass_alpha_ * (prev_filtered_speed_ + new_speed - prev_raw_speed_);
+    
+    // 更新上一次的值
+    prev_raw_speed_ = new_speed;
+    prev_filtered_speed_ = filtered_speed;
+    
+    return filtered_speed;
+}

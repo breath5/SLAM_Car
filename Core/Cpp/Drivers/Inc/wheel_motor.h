@@ -145,6 +145,14 @@ private:
     void SetKalmanP(float p);
     void SetKalmanK(float k);
     void SetKalmanX(float x);
+    
+    // 高通滤波参数
+    float highpass_alpha_ = 0.1f;  // 高通滤波系数 (0-1)，越大高频通过越多
+    float prev_raw_speed_ = 0.0f;  // 上一次原始速度值
+    float prev_filtered_speed_ = 0.0f;  // 上一次高通滤波后的速度值
+    
+    // 高通滤波方法
+    float ApplyHighPassFilter(float new_speed);
 };
 
 #endif
